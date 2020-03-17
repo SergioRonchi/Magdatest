@@ -1,0 +1,22 @@
+<h1>
+  breweries
+</h1>
+
+<ul *ngIf="brews">
+  <li *ngFor="let brew of brews">
+    <p class="name">{{ brew.name }}</p>
+    <p class="country">{{ brew.country }}</p>
+    <a class="site" href="{{ brew.website_url }}" class="site">site</a>
+
+  </li>
+    
+</ul>
+
+
+  
+<ul *ngIf="Correctives">
+  <li *ngFor="let corr of Correctives">
+    <p class="Index">{{ corr.Index }}</p>
+  </li>
+    
+</ul>

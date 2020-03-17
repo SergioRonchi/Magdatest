@@ -1,0 +1,271 @@
+<h1>
+ Welcome!</h1>
+
+ <div class="play-container">
+ <p>You've clicked <span (click)="countClick()">this</span> {{clickCounter}} times.</p>
+</div>
+
+<div class="play-container">
+  <p>
+      <input type="text" [(ngModel)]="name">
+      <br>
+      <strong>You said: </strong> {{ name }}
+  </p>
+ </div>
+ 
+ <div class="play-container" [ngClass]="setClasses()" >
+
+    <ng-template [ngIf]="clickCounter > 4" [ngIfElse]="none">
+      <p>the click counter <strong>is greater</strong> than 4</p>
+    </ng-template>
+
+    <ng-template #none>
+        <p>the click counter <strong>is smaller</strong> than 4</p>
+      </ng-template>
+   </div>
+
+   <div class="play-container">
+      <p>
+          <input type="number" [(ngModel)]="celsius">
+          <br>
+    
+         {{ celsius }} degrees Celsius are equivalent to  {{ convert(celsius) }} degrees Farenheit</p>
+
+     </div>
+
+     <div class="play-container">
+        <button (click)="onclick()">
+            login
+        </button>
+  
+       </div>
+
+
+
+     <div class="play-container">
+        <p>This is an lti PlAN</p>
+        <p>{{ Plan.Name }}</p>
+        <p>{{ Plan.YearStart }}</p>
+        <p>{{ Plan.YearEnd }}</p>
+        <p>{{ Plan.Objectives.Index}}</p>
+       </div>
+
+
+       {{getTargetBonus(Plan)}}
+
+      
+      <ul *ngIf="Plan.Gateways">
+        <li *ngFor="let gat of Plan.Gateways">
+          {{ gat.Name }} 
+              <table>
+               <tr *ngFor="let row of gat.YearlyValues">
+                   <td>
+                       {{row.Year}}
+                   </td>
+                   <td>
+                    {{row.TargetValue}}
+                </td>
+                <td>
+                        {{getCalculatedValue(Plan,row).x}}
+                    </td>
+                    <td>
+                        {{getCalculatedValue(Plan,row).y}}
+                    </td>
+                  
+               </tr>   
+              </table>
+        </li>
+          
+      </ul>
+   
+
+       <ul *ngIf="Plan.Gateways">
+       <strong>Gateways</strong>
+        <li *ngFor="let gat of Plan.Gateways">
+          {{ gat.Name }} 
+            <table>
+                <thead>
+                     <tr>
+                    <th>Year</th>
+                    <th>Weight</th>
+                    <th>TargetValue</th>
+                    <th>CurrentValue</th>
+                    <th>CalcTargetValue</th>
+                    <th>CalcCurrentValue</th>
+                    <th>multiplier</th>
+                    <th>weightedmultiplier</th>
+                    </tr>
+                </thead>
+
+                <tr *ngFor="let row of gat.YearlyValues">
+                         <td>
+                             {{row.Year}}
+                        </td>
+                        <td>
+                            {{gat.Weight}}
+                        </td>
+                        <td>
+                             {{row.TargetValue}}
+                        </td>
+                        <td>
+                              {{row.CurrentValue}}
+                        </td>
+                        <td>
+                            {{row.calcTargetValue}}
+                        </td>
+                        <td>
+                            {{row.calcCurrentValue}}
+                        </td>
+                         <td>
+                            {{row.multiplier}}
+                        </td>
+                        <td>
+                                {{row.weightedmultiplier}}
+                        </td>
+                </tr>   
+            </table>
+        </li>    
+      </ul>
+
+      <ul *ngIf="Plan.Objectives">
+            <strong>Objectives</strong>
+             <li *ngFor="let obj of Plan.Objectives">
+               {{ obj.Name }} 
+                 <table>
+                     <thead>
+                          <tr>
+                         <th>Year</th>
+                         <th>Weight</th>
+                         <th>TargetValue</th>
+                         <th>CurrentValue</th>
+                         <th>CalcTargetValue</th>
+                         <th>CalcCurrentValue</th>
+                         <th>multiplier</th>
+                         <th>weightedmultiplier</th>
+                         </tr>
+                     </thead>
+     
+                     <tr *ngFor="let row of obj.YearlyValues">
+                              <td>
+                                  {{row.Year}}
+                             </td>
+                             <td>
+                                    {{obj.Weight}}
+                            </td>
+                             <td>
+                                  {{row.TargetValue}}
+                             </td>
+                             <td>
+                                   {{row.CurrentValue}}
+                             </td>
+                             <td>
+                                 {{row.calcTargetValue}}
+                             </td>
+                             <td>
+                                 {{row.calcCurrentValue}}
+                             </td>
+                              <td>
+                                 {{row.multiplier}}
+                             </td>
+                             <td>
+                                    {{row.weightedmultiplier}}
+                            </td>
+                     </tr>   
+                 </table>
+             </li>    
+           </ul>
+
+           <ul *ngIf="Plan.Correctives">
+                <strong>Correctives</strong>
+                 <li *ngFor="let corr of Plan.Correctives">
+                   {{ corr.Name }} 
+                     <table>
+                         <thead>
+                              <tr>
+                             <th>Year</th>
+                             <th>Weight</th>
+                             <th>TargetValue</th>
+                             <th>CurrentValue</th>
+                             <th>CalcTargetValue</th>
+                             <th>CalcCurrentValue</th>
+                             <th>multiplier</th>
+                             <th>weightedmultiplier</th>
+                             </tr>
+                         </thead>
+         
+                         <tr *ngFor="let row of corr.YearlyValues">
+                                  <td>
+                                      {{row.Year}}
+                                 </td>
+                                 <td>
+                                        {{corr.Weight}}
+                                </td>
+                                 <td>
+                                      {{row.TargetValue}}
+                                 </td>
+                                 <td>
+                                       {{row.CurrentValue}}
+                                 </td>
+                                 <td>
+                                     {{row.calcTargetValue}}
+                                 </td>
+                                 <td>
+                                     {{row.calcCurrentValue}}
+                                 </td>
+                                  <td>
+                                     {{row.multiplier}}
+                                 </td>
+                                 <td>
+                                        {{row.weightedmultiplier}}
+                                </td>
+                         </tr>   
+                     </table>
+                 </li>    
+               </ul>
+
+  <ul> 
+ {{ Plan.GrandMultiplier.Gateways[2020] }} 
+</ul>
+              
+                
+            
+
+
+
+
+
+
+<ul>
+        <table>
+
+                <td>
+                        {{row.Year}}
+                   </td>
+             
+            <td>
+            {{ Plan.GrandMultipliers.Gateways[2020] }}
+            </td> 
+            <td>
+             {{ Plan.GrandMultipliers.Objectives[2020] }}
+            </td>
+            <td>
+                {{ Plan.GrandMultipliers.Correctives[2020] }}
+            </td>
+
+        {{ Plan.GrandMultipliers.Gateways[2021] }},
+        {{ Plan.GrandMultipliers.Objectives[2021] }},
+        {{ Plan.GrandMultipliers.Correctives[2021] }},
+
+        {{ Plan.GrandMultipliers.Gateways[2022] }},
+        {{ Plan.GrandMultipliers.Objectives[2022] }},
+        {{ Plan.GrandMultipliers.Correctives[2022] }},
+
+        {{ Plan.GrandMultipliers.Gateways[2023] }},
+        {{ Plan.GrandMultipliers.Objectives[2023] }},
+        {{ Plan.GrandMultipliers.Correctives[2023] }},
+    </table>
+</ul>
+              
+
+
+        
