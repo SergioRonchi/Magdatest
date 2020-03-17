@@ -18,15 +18,22 @@ export class HomeComponent implements OnInit {
 
   constructor(private _http: HttpService) { }
 
-  ngOnInit() {
-this.addallmultipliers(this.Plan);
+  /**
+   * Initialization
+   */
+  ngOnInit() { 
+    this.Plan["Multipliers"] = this.calculateAllMultipliers(this.Plan);
 
   }
-
+  /**
+   * Click event handler
+   */
   countClick() {
     this.clickCounter +=1;
   }
-
+  /**
+   * Changes style according to counter value
+   */
   setClasses() {
     let myClasses = {
       active: this.clickCounter > 4,
@@ -34,27 +41,38 @@ this.addallmultipliers(this.Plan);
     };
     return myClasses;
   }
-
+  /**
+   * Converst celsius to farenheit
+   */
   convert() {
     this.farenheit=this.celsius*1.8 +32;
     return this.farenheit;
   }
-
+  /**
+   * Simulate a login to PatPat to get access token
+   */
   onclick() {
   this._http.login().subscribe(result => {
     this.accesstoken=result["access_token"];
   })
   }
-
+  /**
+   * 
+   * @param p 
+   * @param r 
+   */
  getCalculatedValue(p,r){
  let x=r.TargetValue*r.CurrentValue;
  let y=p.YearStart*2;
  return {x,y};
  }
-
+ /**
+  * Calculates Plan Target Bonus
+  * @param p The LTI Plan
+  */
  getTargetBonus(p){
    let yd=p.YearEnd-p.YearStart+1-p.PartecipantsByYear.length;
-  let lastavbonus=0;
+   let lastavbonus=0;
    let sum=0;
    p.PartecipantsByYear.forEach(pbyyear => {
     lastavbonus=this.getYearlyTargetBonus(pbyyear);
@@ -64,22 +82,30 @@ this.addallmultipliers(this.Plan);
    return sum;
  }
 
+ /**
+  * Calculates the Target Bonus of single year
+  * @param p by year parteciopants
+  */
  getYearlyTargetBonus(p){
   let sum=0;
   p.Partecipants.forEach(part => {
-  sum += part.TargetBonusPercentage*part.GrossAnnualSalary;
+    sum += part.TargetBonusPercentage*part.GrossAnnualSalary;
   }); 
   return sum;
 }
 
 
-
- getMultiplier(gat,year){
+/**
+ * Calculates a multiplier 
+ * @param o 
+ * @param year 
+ */
+ getMultiplier(o,year){
   let multiplier = 
-     ((gat.Cap-gat.Floor)/(gat.Max-gat.Min))*
-     (year.calcCurrentValue/year.calcTargetValue-gat.Max)
-     +gat.Cap
-     ;
+     ((o.Cap-o.Floor)/(o.Max-o.Min))*
+     (year.calcCurrentValue/year.calcTargetValue-o.Max)
+     +o.Cap;
+
   if (isNaN(multiplier)) {
     return 1;
   }
@@ -102,39 +128,69 @@ getWeightedMultiplier(gat,year){
   };
 }
 
-  addmultiplier(list, GrandMultipliers, Type, p){
-    GrandMultipliers[Type]={};
+/**
+ * Adds a multiplier to GrandMultipliers object
+ * @param list list of object to scan
+ * @param m  GrandMultipliers object
+ * @param t  type: valid values Gateways,Objectives,Correctives
+ * @param p  LTI plan
+ */
+  addMultiplier(list, m, t, p){
+    m[t]={}; //create a property named 't'
 
     list.forEach(o => {
-      this.calcvalue(o);
-      o.YearlyValues.forEach(year=> {
-        if (!GrandMultipliers[Type][year.Year]) GrandMultipliers[Type][year.Year]=0;
-        year.multiplier=this.getMultiplier(o,year);
-        year.weightedmultiplier=this.getWeightedMultiplier(o,year); 
-        GrandMultipliers[Type][year.Year]+=year.weightedmultiplier;
+      this.calcValue(o);
+      o.YearlyValues.forEach(y=> {
+        if (!m[t][y.Year]) m[t][y.Year]=0;
+        y.multiplier=this.getMultiplier(o,y);
+        y.weightedmultiplier=this.getWeightedMultiplier(o,y); 
+        m[t][y.Year]+=y.weightedmultiplier;
     });
     });
 }
 
 
 
+/**
+ * Calculates all multiplies
+ * @param p LTI plan
+ */
+calculateAllMultipliers(p){
+  let grandMultipliers={};
+  this.addMultiplier(p.Gateways, grandMultipliers, "Gateways", p);
+  this.addMultiplier(p.Objectives, grandMultipliers, "Objectives",p);
+  this.addMultiplier(p.Correctives, grandMultipliers, "Correctives",p);
 
-addallmultipliers(p){
-  let GrandMultipliers={};
-  this.addmultiplier(p.Gateways, GrandMultipliers, "Gateways", p);
-  this.addmultiplier(p.Objectives, GrandMultipliers, "Objectives",p);
-  this.addmultiplier(p.Correctives, GrandMultipliers, "Correctives",p);
-  p.GrandMultipliers=GrandMultipliers;
-  /* accedere ai valori all'interno di un ogetto speciale
-  for (var g in GrandMultipliers["Gateways"]) {
-  console.log(g);
-  console.log(GrandMultipliers["Gateways"][g])
+
+  let byYaerMultiplierList=[];
+  for(var y=p.YearStart;y<=p.YearEnd;y++) {
+    let m={
+      year:y,
+      multipliers:{
+        gateways:0.0,
+        objectives:0.0,
+        correctives:0.0
+      }
+    };
+
+    m.multipliers.gateways=grandMultipliers["Gateways"][y];
+    m.multipliers.objectives=grandMultipliers["Objectives"][y];
+    m.multipliers.correctives=grandMultipliers["Correctives"][y];
+
+    byYaerMultiplierList.push(m);
   }
-   */
+  return byYaerMultiplierList;
+ 
+  
 }
 
 
-calcvalue(o){
+
+/**
+ * Calculates Target and Current values
+ * @param o 
+ */
+calcValue(o){
   let rollingsum=0.0;
   let counter=0;
   let rollingsum_current=0.0;
@@ -163,8 +219,6 @@ calcvalue(o){
   });
 }
 
-
-GrandMultipliersO
 
   Plan= {
     "CompanyId":"9AA24871-608B-4A67-B6B5-188A194A81D4",
