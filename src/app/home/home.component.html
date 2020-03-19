@@ -251,6 +251,54 @@
 
 
 
+
+    <ul *ngIf="Plan.PartecipantsByYear">
+          <strong>Bonus by Participant by Year </strong> 
+             <li *ngFor="let y of Plan.PartecipantsByYear">
+               {{ y.Year }} 
+               {{ getYearlyTargetBonus(y) }} 
+                 <table>
+                     <thead>
+                        
+                          <tr>
+                         <th>Name</th>
+                         <th>Surname</th>
+                         <th>RAL</th>
+                         <th>TargetBonusPercentage</th>
+                         <th>Target Bonus</th>
+                         <th>Admitted Bonus</th>
+                         <th>Accrued Bonus</th>
+                         </tr>
+                     </thead>
+     
+                     <tr *ngFor="let row of y.Partecipants">
+                            <td>
+                                    {{row.Name}}
+                               </td>
+                               <td>
+                                    {{row.Surname}}
+                               </td>
+                              <td>
+                                  {{row.GrossAnnualSalary}}
+                             </td>
+                            
+                             <td>
+                                  {{row.TargetBonusPercentage}}
+                             </td>
+                             <td>
+                                    {{row.TargetBonusPercentage * row.GrossAnnualSalary}}
+                            </td>
+                            <td>
+                                    {{getAdmittedBonusP(row, y.Year)}}
+                            </td>
+                            <td>
+                                    {{getAccruedBonusP(row, y.Year)}}
+                            </td>
+                            
+                     </tr>   
+                 </table>
+             </li>    
+           </ul>
               
 
 

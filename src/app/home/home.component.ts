@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { convertActionBinding } from '@angular/compiler/src/compiler_util/expression_converter';
 import { HttpService } from '../http.service';
+import { isNull } from '@angular/compiler/src/output/output_ast';
+import { listLazyRoutes } from '@angular/compiler/src/aot/lazy_routes';
+import { forEach } from '@angular/router/src/utils/collection';
 
 @Component({
   selector: 'app-home',
@@ -22,14 +25,16 @@ export class HomeComponent implements OnInit {
    * Initialization
    */
   ngOnInit() { 
-    this.Plan["Multipliers"] = this.calculateAllMultipliers(this.Plan);
-
+    
   }
   /**
    * Click event handler
    */
   countClick() {
     this.clickCounter +=1;
+    this.Plan["Multipliers"] = this.calculateAllMultipliers(this.Plan);
+    this.Plan.PartecipantsByYear["Partecipant"]["TargetBonus"] = this.calculateTargetBonus()
+  
   }
   /**
    * Changes style according to counter value
@@ -81,51 +86,126 @@ export class HomeComponent implements OnInit {
    sum += yd*lastavbonus;
    return sum;
  }
+ 
 
  /**
   * Calculates the Target Bonus of single year
   * @param p by year parteciopants
   */
+ 
  getYearlyTargetBonus(p){
-  let sum=0;
+  let targetbonusy=0;
   p.Partecipants.forEach(part => {
-    sum += part.TargetBonusPercentage*part.GrossAnnualSalary;
+    targetbonusy += part.TargetBonusPercentage*part.GrossAnnualSalary;
   }); 
-  return sum;
+  return targetbonusy;
 }
 
+getAdmittedBonusP(part, year){
+  let m=this.Plan["Multipliers"].find(x => x.year=year);
+  let admittedbonusp=part.GrossAnnualSalary*part.TargetBonusPercentage*m.multipliers.gateways;
+  return admittedbonusp;
+}
 
+getAccruedBonusP(part, year){
+  let m=this.Plan["Multipliers"].find(x => x.year=year);
+  let accruedbonusp=part.admittedbonusp*m.multipliers.objectives;
+  return accruedbonusp;
+}
+
+getAdmittedBonusC(pby){
+  let year=pby.Year;
+  let admittedbonusc=0;
+  pby.Partecipants.foreach(part=> {
+    let admittedbonusp= this.getAdmittedBonusP(part,year);
+    admittedbonusc += admittedbonusp;
+    });
+  return admittedbonusc;
+}
 /**
  * Calculates a multiplier 
  * @param o 
  * @param year 
  */
- getMultiplier(o,year){
-  let multiplier = 
-     ((o.Cap-o.Floor)/(o.Max-o.Min))*
-     (year.calcCurrentValue/year.calcTargetValue-o.Max)
-     +o.Cap;
+getMultiplier(o,year){
+  let multiplier=0
+  if ((year.CurrentValue!=null) && (year.TargetValue!=null)) {
 
-  if (isNaN(multiplier)) {
-    return 1;
-  }
-  else {
-    return multiplier;
-  };
+    if (o.Measure.MeasureType=="scale") { 
+    
+      if (year.calcCurrentValue <  (year.calcTargetValue + o.Min)) {
+        multiplier=0
+      }
+      else {
+        if (o.IsCorridor==false) {
+          multiplier=1
+        }
+        else {
+          if ( (year.calcCurrentValue >= (year.calcTargetValue + o.Min)) && (year.calcCurrentValue <= year.calcTargetValue)) { 
+          multiplier=
+          o.Floor+
+          ((
+            (year.calcCurrentValue - (year.calcTargetValue + o.Min))/
+           (year.calcTargetValue - (year.calcTargetValue + o.Min))
+           )
+           * (1-o.Floor))
+          }
+          else { multiplier=
+            Math.min(1+
+             (
+               (year.calcCurrentValue - year.calcTargetValue)/
+              ((o.Max + year.calcTargetValue)- year.calcTargetValue)
+              )
+              * (o.Cap-1), o.Cap)
+          }
+       }
+
+      }
+
+      ;
+    } 
+
+      else { 
+        if (year.calcCurrentValue < year.calcTargetValue * o.Min) {
+          multiplier=0
+        }
+        else {
+          if (o.IsCorridor==false) {
+            multiplier=1
+          }
+          else {
+            if ( (year.calcCurrentValue >= year.calcTargetValue * o.Min) && (year.calcCurrentValue <= year.calcTargetValue)) { 
+            multiplier=
+            o.Floor+
+            (
+              (year.calcCurrentValue - (year.calcTargetValue * o.Min))/
+             (year.calcTargetValue - (year.calcTargetValue * o.Min))
+             )
+             * (1-o.Floor)
+            }
+            else { multiplier=
+              Math.min(1+
+               (
+                 (year.calcCurrentValue - year.calcTargetValue)/
+                ((o.Max * year.calcTargetValue)- year.calcTargetValue)
+                )
+                * (o.Cap-1), o.Cap)
+            }
+         }
+
+        }
+      }
+    }
+  
+  return multiplier;
 }
 
-getWeightedMultiplier(gat,year){
-  let weightedmultiplier = 
-     gat.Weight *  (((gat.Cap-gat.Floor)/(gat.Max-gat.Min))*
-     (year.calcCurrentValue/year.calcTargetValue-gat.Max)
-     +gat.Cap)
-     ;
-  if (isNaN(weightedmultiplier)) {
-    return gat.Weight;
-  }
-  else {
-    return weightedmultiplier;
-  };
+  
+
+
+getWeightedMultiplier(o,year){
+  let weightedmultiplier = o.Weight * year.multiplier;
+  return weightedmultiplier;
 }
 
 /**
@@ -315,21 +395,21 @@ calcValue(o){
     "Name": "Marion",
     "Surname": "Acker",
     "TargetBonusPercentage": "0.2",	
-                 "GrossAnnualSalary": 100000.0000,
+    "GrossAnnualSalary": 100000.0000,
   },
   {
     "EmployeeId": "FC3D3D67-1EBB-4E07-B457-630BB95B137E",
     "Name": "Achine",
     "Surname": "Royal",
     "TargetBonusPercentage": "0.3",	
-                 "GrossAnnualSalary": 100000.0000,
+    "GrossAnnualSalary": 100000.0000,
   },
   {
     "EmployeeId": "1EE9C0B9-8D5E-4EE4-AE92-3818725A4EB6",
     "Name": "David",
     "Surname": "Abdo",
     "TargetBonusPercentage": "0.5",	
-                 "GrossAnnualSalary": 50000.0000,
+    "GrossAnnualSalary": 50000.0000,
   },
    ]
   },
@@ -413,23 +493,27 @@ calcValue(o){
    },
   ],
       "Gateways":[
+          
            {
    "Index":0,
             "Name":"Sales",
             "GoalId":"A80F696D-4F84-4A06-B46F-FFE9BA560DBF",
-            "MeasureId":"423A463C-C751-479D-9D7D-5F4B2ED0A8A0",
+            "Measure":
+            {"MeasureId":"423A463C-C751-479D-9D7D-5F4B2ED0A8A0", "MeasureType":"money"}
+            
+            ,
             "IsCorridor":true,
             "Min":0.80,
-            "Max":1.20,
-            "Floor":0.90,
-            "Cap":1.10,
+            "Max":1.10,
+            "Floor":0.80,
+            "Cap":1.30,
             "ConsultationType":"Punctual",
             "Currency":"€",
             "FormatId":null,
             "ScaleId":null,
-            "Weight":0.4,
+            "Weight":0.5,
             "YearlyValues":
-              [{"Year":2020, "TargetValue":100.0, "CurrentValue":120},
+              [{"Year":2020, "TargetValue":100.0, "CurrentValue":90},
                {"Year":2021, "TargetValue":200.0, "CurrentValue":200},
                {"Year":2022, "TargetValue":300.0, "CurrentValue":330},
                {"Year":2023, "TargetValue":400.0, "CurrentValue":390},
@@ -439,7 +523,10 @@ calcValue(o){
    "Index":1,
             "Name":"Revenue growth rate",
             "GoalId":"6D67B6C5-3F42-478B-889D-D18C94370944",
-            "MeasureId":"C7CEB538-1212-43F7-832B-95EE92B68A0C",
+            "Measure":
+            {"MeasureId":"A2315C50-4736-41A2-ADE9-1E4A02EAAB61", "MeasureType":"%growth"}
+            
+            ,
             "IsCorridor":true,
             "Min":0.8,
             "Max":1.2,
@@ -451,10 +538,10 @@ calcValue(o){
             "ScaleId":null,
             "Weight":0.5,
             "YearlyValues":
-              [{"Year":2020, "TargetValue":0.02, "CurrentValue":0.017},
-               {"Year":2021, "TargetValue":0.03, "CurrentValue":0.031},
-               {"Year":2022, "TargetValue":0.04, "CurrentValue":0.045},
-               {"Year":2023, "TargetValue":0.05, "CurrentValue":0.056},
+              [{"Year":2020, "TargetValue":0.02, "CurrentValue":0.01},
+               {"Year":2021, "TargetValue":0.03, "CurrentValue":0.10},
+               {"Year":2022, "TargetValue":0.04, "CurrentValue":0.04},
+               {"Year":2023, "TargetValue":0.05, "CurrentValue":0.05},
               ]
              },
           
@@ -464,7 +551,10 @@ calcValue(o){
    "Index":0,
             "Name":"EVA",
             "GoalId":"467F8592-982E-41D3-B10E-D165F404A2AE",
-            "MeasureId":"423A463C-C751-479D-9D7D-5F4B2ED0A8A0",
+            "Measure":
+            {"MeasureId":"423A463C-C751-479D-9D7D-5F4B2ED0A8A0", "MeasureType":"money"}
+            
+            ,
             "IsCorridor":true,
             "Min":0.80,
             "Max":1.20,
@@ -476,17 +566,20 @@ calcValue(o){
             "ScaleId":null,
             "Weight":0.4,
             "YearlyValues":
-              [{"Year":2020, "TargetValue":100000.0, "CurrentValue":150000},
-               {"Year":2021, "TargetValue":200000.0, "CurrentValue":null},
-               {"Year":2022, "TargetValue":300000.0, "CurrentValue":null},
-               {"Year":2023, "TargetValue":400000.0, "CurrentValue":null},
+              [{"Year":2020, "TargetValue":100000.0, "CurrentValue":40000.0},
+               {"Year":2021, "TargetValue":200000.0, "CurrentValue":180000.0},
+               {"Year":2022, "TargetValue":300000.0, "CurrentValue":290000.0},
+               {"Year":2023, "TargetValue":400000.0, "CurrentValue":310000.0},
               ]
              },
                  {
    "Index":1,
             "Name":"ROI",
             "GoalId":"6FC91804-ABA5-4439-BF70-50F5862E4D07",
-            "MeasureId":"C7CEB538-1212-43F7-832B-95EE92B68A0C",
+            "Measure":
+            {"MeasureId":"C7CEB538-1212-43F7-832B-95EE92B68A0C", "MeasureType":"percent"}
+            
+            ,
             "IsCorridor":false,
             "Min":0.0,
             "Max":0.0,
@@ -498,32 +591,35 @@ calcValue(o){
             "ScaleId":null,
             "Weight":0.5,
             "YearlyValues":
-              [{"Year":2020, "TargetValue":0.09, "CurrentValue":null},
-               {"Year":2021, "TargetValue":0.10, "CurrentValue":null},
-               {"Year":2022, "TargetValue":0.11, "CurrentValue":null},
-               {"Year":2023, "TargetValue":0.12, "CurrentValue":null},
+              [{"Year":2020, "TargetValue":0.09, "CurrentValue":0.08},
+               {"Year":2021, "TargetValue":0.10, "CurrentValue":0.11},
+               {"Year":2022, "TargetValue":0.11, "CurrentValue":0.12},
+               {"Year":2023, "TargetValue":0.12, "CurrentValue":0.11},
               ]
              },
               {
    "Index":2,
             "Name":"Quality index",
             "GoalId":"98AE0348-35F1-4C9C-99B0-891271DA3396",
-            "MeasureId":"416F0A9B-058F-4813-B1B2-CDFD680613A8",
-            "IsCorridor":false,
-            "Min":0.0,
-            "Max":0.0,
-            "Floor":0.0,
-            "Cap":0.0,
+            "Measure":
+            {"MeasureId":"416F0A9B-058F-4813-B1B2-CDFD680613A8", "MeasureType":"scale"}
+            
+            ,
+            "IsCorridor":true,
+            "Min":-1,
+            "Max":+1,
+            "Floor":0.9,
+            "Cap":1.1,
             "ConsultationType":"Punctual",
             "Currency":null,
             "FormatId":null,
             "ScaleId":"06D842A4-C2CA-49D6-A375-641C32C2E87B",
             "Weight":0.1,
             "YearlyValues":
-              [{"Year":2020, "TargetValue":4, "CurrentValue":null},
-               {"Year":2021, "TargetValue":4, "CurrentValue":null},
-               {"Year":2022, "TargetValue":5, "CurrentValue":null},
-               {"Year":2023, "TargetValue":5, "CurrentValue":null},
+              [{"Year":2020, "TargetValue":4, "CurrentValue":3},
+               {"Year":2021, "TargetValue":4, "CurrentValue":4},
+               {"Year":2022, "TargetValue":5, "CurrentValue":4},
+               {"Year":2023, "TargetValue":5, "CurrentValue":5},
               ]
              }
   ],
@@ -532,7 +628,10 @@ calcValue(o){
    "Index":0,
             "Name":"Waste reduction rate",
             "GoalId":"A72AAB58-ED19-48BB-9167-498325459DF1",
-            "MeasureId":"C7CEB538-1212-43F7-832B-95EE92B68A0C",
+            "Measure":
+            {"MeasureId":"C7CEB538-1212-43F7-832B-95EE92B68A0C", "MeasureType":"percent"}
+            ,
+
             "IsCorridor":false,
             "Min":0.0,
             "Max":0.0,
@@ -544,31 +643,33 @@ calcValue(o){
             "ScaleId":null,
             "Weight":0.3,
             "YearlyValues":
-              [{"Year":2020, "TargetValue":0.50, "CurrentValue":null},
-               {"Year":2021, "TargetValue":0.60, "CurrentValue":null},
-               {"Year":2022, "TargetValue":0.70, "CurrentValue":null},
-               {"Year":2023, "TargetValue":0.80, "CurrentValue":null},]
+              [{"Year":2020, "TargetValue":0.50, "CurrentValue":0.60},
+               {"Year":2021, "TargetValue":0.60, "CurrentValue":0.50},
+               {"Year":2022, "TargetValue":0.70, "CurrentValue":0.80},
+               {"Year":2023, "TargetValue":0.80, "CurrentValue":0.50},]
              },
               {
    "Index":1,
             "Name":"Customer profitability score",
             "GoalId":"4AACF1D1-657A-4253-8DD3-F38FE8FDA712",
-            "MeasureId":"416F0A9B-058F-4813-B1B2-CDFD680613A8",
-            "IsCorridor":false,
-            "Min":0.0,
-            "Max":0.0,
-            "Floor":0.0,
-            "Cap":0.0,
-            "ConsultationType":"Average",
+            "Measure":
+            {"MeasureId":"416F0A9B-058F-4813-B1B2-CDFD680613A8", "MeasureType":"scale"}
+            ,
+            "IsCorridor":true,
+            "Min":6,
+            "Max":8,
+            "Floor":0.9,
+            "Cap":1.1,
+            "ConsultationType":"Punctual",
             "Currency":null,
             "FormatId":null,
             "ScaleId":"0B64B3AA-69B1-4577-A6A8-5D28E8CF9B2A",
             "Weight":0.7,
             "YearlyValues":
-              [{"Year":2020, "TargetValue":7, "CurrentValue":null},
-               {"Year":2021, "TargetValue":7, "CurrentValue":null},
-               {"Year":2022, "TargetValue":8, "CurrentValue":null},
-               {"Year":2023, "TargetValue":9, "CurrentValue":null},]
+              [{"Year":2020, "TargetValue":7, "CurrentValue":7},
+               {"Year":2021, "TargetValue":7, "CurrentValue":8},
+               {"Year":2022, "TargetValue":8, "CurrentValue":8},
+               {"Year":2023, "TargetValue":9, "CurrentValue":9},]
              }
   ]
   }
