@@ -119,6 +119,10 @@ this.Plan.PartecipantsByYear.forEach( pby => {
       "Target":0,
       "Admitted":0,
       "Accrued":0,
+      "PayableCash":0,
+      "PayableEquity":0,
+      "Deferred":0,
+
     };
     this.Plan.Bonuses.push(Bonus);
     if (this.Plan["Multipliers"]) {
@@ -132,8 +136,12 @@ this.Plan.PartecipantsByYear.forEach( pby => {
          Bonus.Target+=part.TargetBonus;
          Bonus.Admitted+=part.AdmittedBonus;
          Bonus.Accrued+=part.AccruedBonus;
+         Bonus.PayableCash+=part.PayableCash;
+         Bonus.PayableEquity+=part.PayableEquity;
+         Bonus.Deferred+=part.Deferred;
          part.PayableCash = part.AccruedBonus * py.Cash;
         part.PayableEquity = part.AccruedBonus * py.Equity;
+        part.Deferred = part.AccruedBonus - (part.PayableCash+part.PayableEquity);
           });
 
     }
@@ -159,21 +167,25 @@ getAdmittedBonusC(pby){
  * @param year 
  */
 getMultiplier(o,year){
-  let multiplier=0
+  let multiplier={
+    "value":0,
+    "min":0,
+    "max":0
+  }
   if ((year.CurrentValue!=null) && (year.TargetValue!=null)) {
 
     if (o.Measure.MeasureType=="scale") { 
     
       if (year.calcCurrentValue <  (year.calcTargetValue + o.Min)) {
-        multiplier=0
+        multiplier.value=0
       }
       else {
         if (o.IsCorridor==false) {
-          multiplier=1
+          multiplier.value=1
         }
         else {
           if ( (year.calcCurrentValue >= (year.calcTargetValue + o.Min)) && (year.calcCurrentValue <= year.calcTargetValue)) { 
-          multiplier=
+          multiplier.value=
           o.Floor+
           ((
             (year.calcCurrentValue - (year.calcTargetValue + o.Min))/
@@ -181,7 +193,7 @@ getMultiplier(o,year){
            )
            * (1-o.Floor))
           }
-          else { multiplier=
+          else { multiplier.value=
             Math.min(1+
              (
                (year.calcCurrentValue - year.calcTargetValue)/
@@ -198,15 +210,15 @@ getMultiplier(o,year){
 
       else { 
         if (year.calcCurrentValue < year.calcTargetValue * o.Min) {
-          multiplier=0
+          multiplier.value=0
         }
         else {
           if (o.IsCorridor==false) {
-            multiplier=1
+            multiplier.value=1
           }
           else {
             if ( (year.calcCurrentValue >= year.calcTargetValue * o.Min) && (year.calcCurrentValue <= year.calcTargetValue)) { 
-            multiplier=
+            multiplier.value=
             o.Floor+
             (
               (year.calcCurrentValue - (year.calcTargetValue * o.Min))/
@@ -214,7 +226,7 @@ getMultiplier(o,year){
              )
              * (1-o.Floor)
             }
-            else { multiplier=
+            else { multiplier.value=
               Math.min(1+
                (
                  (year.calcCurrentValue - year.calcTargetValue)/
@@ -228,10 +240,54 @@ getMultiplier(o,year){
       }
     }
   
-  return multiplier;
+  return multiplier.value;
 }
 
+getMultiplierMin(o,year) {
+  let multipliermin=0
   
+  if (o.IsCorridor==false) { 
+    multipliermin=1
+  }
+  else {
+  multipliermin=o.Floor
+  }
+  return multipliermin;
+}
+getMultiplierMax(o,year) {
+  let multipliermax=0
+  
+  if (o.IsCorridor==false) { 
+    multipliermax=1
+  }
+  else {
+  multipliermax=o.Cap
+  }
+  return multipliermax;
+}
+getWeightedMultiplierMin(o,year) {
+  let weightedmultipliermin=0
+  
+  if (o.IsCorridor==false) { 
+    weightedmultipliermin=o.Weight
+  }
+  else {
+    weightedmultipliermin=o.Weight*o.Floor
+  }
+  return weightedmultipliermin;
+}
+
+getWeightedMultiplierMax(o,year) {
+  let weightedmultipliermax=0
+  
+  if (o.IsCorridor==false) { 
+    weightedmultipliermax=o.Weight
+  }
+  else {
+    weightedmultipliermax=o.Weight*o.Cap
+  }
+  return weightedmultipliermax;
+}
 
 
 getWeightedMultiplier(o,year){
@@ -252,10 +308,15 @@ getWeightedMultiplier(o,year){
     list.forEach(o => {
       this.calcValue(o);
       o.YearlyValues.forEach(y=> {
-        if (!m[t][y.Year]) m[t][y.Year]=0;
+        if (!m[t][y.Year]) m[t][y.Year]={"value":0, "min":0, "max":0};
         y.multiplier=this.getMultiplier(o,y);
         y.weightedmultiplier=this.getWeightedMultiplier(o,y); 
-        m[t][y.Year]+=y.weightedmultiplier;
+        y.weightedmultipliermin=this.getWeightedMultiplierMin(o,y); 
+        y.weightedmultipliermax=this.getWeightedMultiplierMax(o,y); 
+        m[t][y.Year].value+=y.weightedmultiplier;
+        m[t][y.Year].min+=y.weightedmultipliermin;
+        m[t][y.Year].max+=y.weightedmultipliermax;
+
     });
     });
 }
@@ -278,15 +339,32 @@ calculateAllMultipliers(p):any {
     let m={
       year:y,
       multipliers:{
-        gateways:0.0,
-        objectives:0.0,
-        correctives:0.0
+        gateways:{
+          "value":0.0,
+          "min":0.0,
+          "max":0.0,},
+        objectives: {
+          "value":0.0,
+          "min":0.0,
+          "max":0.0,
+        },
+        correctives: {
+          "value":0.0,
+          "min":0.0,
+          "max":0.0,
+        }
       }
     };
 
-    m.multipliers.gateways=grandMultipliers["Gateways"][y];
-    m.multipliers.objectives=grandMultipliers["Objectives"][y];
-    m.multipliers.correctives=grandMultipliers["Correctives"][y];
+    m.multipliers.gateways["value"]=grandMultipliers["Gateways"]["value"][y];
+    m.multipliers.objectives["value"]=grandMultipliers["Objectives"]["value"][y];
+    m.multipliers.correctives["value"]=grandMultipliers["Correctives"]["value"][y];
+    m.multipliers.gateways["min"]=grandMultipliers["Gateways"]["min"][y];
+    m.multipliers.objectives["min"]=grandMultipliers["Objectives"]["min"][y];
+    m.multipliers.correctives["min"]=grandMultipliers["Correctives"]["min"][y];
+    m.multipliers.gateways["max"]=grandMultipliers["Gateways"]["max"][y];
+    m.multipliers.objectives["max"]=grandMultipliers["Objectives"]["max"][y];
+    m.multipliers.correctives["max"]=grandMultipliers["Correctives"]["max"][y];
 
     byYaerMultiplierList.push(m);
   }
@@ -356,11 +434,11 @@ calcValue(o){
             "PayoutValues":
              [
                {"PayoutYear":2020,
-               "Cash":0.0,
-               "Equity":0.0},
-              {"PayoutYear":2021,
                "Cash":0.10,
                "Equity":0.20},
+              {"PayoutYear":2021,
+               "Cash":0.00,
+               "Equity":0.00},
                {"PayoutYear":2022,
                "Cash":0.15,
                "Equity":0.25},
