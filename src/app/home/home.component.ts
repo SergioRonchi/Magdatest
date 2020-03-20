@@ -32,16 +32,11 @@ export class HomeComponent implements OnInit {
    * Click event handler
    */
   countClick() {
-    this.clickCounter +=1;
-    this.Plan["Multipliers"] = this.calculateAllMultipliers(this.Plan);
-    this.getBonusesP();
+    this.clickCounter += 1;
+  
   }
 
-  onModelChange() {
-    this.Plan["Multipliers"] = this.calculateAllMultipliers(this.Plan);
-    this.getBonusesP();
-  }
-  
+ 
 
   /**
    * Changes style according to counter value
@@ -57,7 +52,7 @@ export class HomeComponent implements OnInit {
    * Converst celsius to farenheit
    */
   convert() {
-    this.farenheit=this.celsius*1.8 +32;
+    this.farenheit = this.celsius * 1.8 + 32;
     return this.farenheit;
   }
   /**
@@ -65,9 +60,10 @@ export class HomeComponent implements OnInit {
    */
   onclick() {
   this._http.login().subscribe(result => {
-    this.accesstoken=result["access_token"];
+    this.accesstoken = result["access_token"];
   })
   }
+<<<<<<< HEAD
   /**
    * 
    * @param p 
@@ -785,3 +781,6 @@ calcValue(o){
   }
 }
 
+=======
+}
+>>>>>>> 988387744410aa83dabd59534fa3be458136d036
