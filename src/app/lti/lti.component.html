@@ -161,7 +161,7 @@
                 <tr>
                   <td>Target Value</td>
                   <td *ngFor="let year of item.years">
-                    <input  type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                    <input  type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year,item)">
                   </td>
                 </tr>
               </tbody>
@@ -180,7 +180,7 @@
                 <tr>
                   <td>Yearly Value</td>
                   <td *ngFor="let year of item.years">
-                    <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                    <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year,item)">
                   </td>
                 </tr>
                 <tr>
@@ -218,7 +218,7 @@
                 <tr>
                   <td>YearlyValue</td>
                   <td *ngFor="let year of item.years">
-                    <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                    <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year,item)">
                   </td>
                 </tr>
                 <tr>
@@ -359,7 +359,7 @@
               <tr>
                 <td>Target Value</td>
                 <td *ngFor="let year of item.years">
-                  <input  type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                  <input  type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year,item)">
                 </td>
               </tr>
             </tbody>
@@ -378,7 +378,7 @@
               <tr>
                 <td>Yearly Value</td>
                 <td *ngFor="let year of item.years">
-                  <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                  <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year,item)">
                 </td>
               </tr>
               <tr>
@@ -416,7 +416,7 @@
               <tr>
                 <td>YearlyValue</td>
                 <td *ngFor="let year of item.years">
-                  <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                  <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year,item)">
                 </td>
               </tr>
               <tr>
@@ -558,7 +558,7 @@
               <tr>
                 <td>Target Value</td>
                 <td *ngFor="let year of item.years">
-                  <input  type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                  <input  type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year,item)">
                 </td>
               </tr>
             </tbody>
@@ -577,7 +577,7 @@
               <tr>
                 <td>Yearly Value</td>
                 <td *ngFor="let year of item.years">
-                  <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                  <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year,item)">
                 </td>
               </tr>
               <tr>
@@ -615,7 +615,7 @@
               <tr>
                 <td>YearlyValue</td>
                 <td *ngFor="let year of item.years">
-                  <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                  <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year,item)">
                 </td>
               </tr>
               <tr>
