@@ -5,9 +5,9 @@
    <section>
       <H1>TimeSpan & Partecipants</H1>
       <label>YearStart</label>
-      <input type="text" [(ngModel)]="currentPlan.YearStart"/>
+      <input type="text" [(ngModel)]="currentPlan.YearStart" (ngModelChange)="updateModel()"/>
       <label>YearEnd</label>
-      <input type="text" [(ngModel)]="currentPlan.YearEnd"/>
+      <input type="text" [(ngModel)]="currentPlan.YearEnd" (ngModelChange)="updateModel()" />
       <table>
         <tr>
           <td>
@@ -130,19 +130,19 @@
 
               <div class="display-flex-left">
                 <div class="form-check" *ngIf="checkVisible(4)">
-                  <input class="form-check-input magic-radio" name="ConsultationType" type="radio" id="punctual" value="4" (click)="setChecked( 4,item)">
+                  <input class="form-check-input magic-radio" name="ConsultationType" type="radio" id="punctual" value="4" (click)="setChecked( 4,item)" (ngModelChange)="updateModel()">
                   <label class="form-check-label" for="punctual" (click)="setChecked( 4,item)">
                     Punctual
                   </label>
                 </div>
                 <div class="form-check" *ngIf="checkVisible(2)">
-                  <input class="form-check-input magic-radio" name="ConsultationType" type="radio" id="cumulative" value="2" (click)="setChecked( 2,item)">
+                  <input class="form-check-input magic-radio" name="ConsultationType" type="radio" id="cumulative" value="2" (click)="setChecked( 2,item)" (ngModelChange)="updateModel()">
                   <label class="form-check-label" for="cumulative" (click)="setChecked( 2,item)">
                     Cumulative
                   </label>
                 </div>
                 <div class="form-check" *ngIf="checkVisible(1)">
-                  <input class="form-check-input magic-radio" name="ConsultationType" type="radio" id="average" value="1" (click)="setChecked( 1,item)">
+                  <input class="form-check-input magic-radio" name="ConsultationType" type="radio" id="average" value="1" (click)="setChecked( 1,item)" (ngModelChange)="updateModel()">
                   <label class="form-check-label" for="average" (click)="setChecked( 1,item)">
                     Average
                   </label>
@@ -161,7 +161,7 @@
                 <tr>
                   <td>Target Value</td>
                   <td *ngFor="let year of item.years">
-                    <input  type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                    <input  type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)" >
                   </td>
                 </tr>
               </tbody>
@@ -180,7 +180,7 @@
                 <tr>
                   <td>Yearly Value</td>
                   <td *ngFor="let year of item.years">
-                    <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                    <input type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
                   </td>
                 </tr>
                 <tr>

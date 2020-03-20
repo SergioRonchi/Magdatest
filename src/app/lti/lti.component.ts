@@ -116,7 +116,13 @@ export class LtiComponent implements OnInit {
   }
   /*************************************************************************** */
   getTotalTargetValue() {
-    return '-';//TODO
+    if (this.currentPlan && this.currentPlan.TotalBonus) {
+      return this.currentPlan.TotalBonus.Target;
+    }
+    else {
+      return "-";
+    }
+    
   }
   /*************************************************************************** */
   getTotalMinValue() {
@@ -187,6 +193,7 @@ export class LtiComponent implements OnInit {
 
  setChecked(value, item){
   item['ConsultationType']=value;
+  this.updateModel();
  }
 
 }
