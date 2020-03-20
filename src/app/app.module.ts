@@ -7,12 +7,16 @@ import { HomeComponent } from './home/home.component';
 import { ListComponent } from './list/list.component';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { LtiComponent } from './lti/lti.component';
+
 
 @NgModule({
   declarations: [
     AppComponent,
     HomeComponent,
-    ListComponent
+    ListComponent,
+    LtiComponent,
+
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,250 @@
+<div>
+  <button (click)="newPlan()">Create New Plan</button>
+</div>
+<div *ngIf="currentPlan">
+   <section>
+      <H1>TimeSpan & Partecipants</H1>
+      <label>YearStart</label>
+      <input type="text" [(ngModel)]="currentPlan.YearStart"/>
+      <label>YearEnd</label>
+      <input type="text" [(ngModel)]="currentPlan.YearEnd"/>
+      <table>
+        <tr>
+          <td>
+            <table>
+              <thead>
+                <tr>
+                  <th>
+                    Employee
+                  </th>
+                  <th>
+                    GAS
+                  </th>
+                  <th>
+                    Bonus %
+                  </th>
+                  <th>
+                    Target Bonus
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of currentPlan.PartecipantsByYear[0].Partecipants">
+                  <td>{{p.Name}} {{p.Surname}}</td>
+                  <td><input type="text" [(ngModel)]="p.GrossAnnualSalary" (ngModelChange)="updateModel()"/></td>
+                  <td><input type="text" [(ngModel)]="p.TargetBonusPercentage" (ngModelChange)="updateModel()"/></td>
+                  <td>{{p.TargetBonus}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+          <td>
+            <div class="box">
+              <p>Target {{getTotalTargetValue()}}   </p>
+              <p>Min {{getTotalMinValue()}}   </p>
+              <p>Max {{getTotalMaxValue()}}   </p>
+            </div>
+
+          </td>
+        </tr>
+      </table>
+
+  </section>
+ <!--------------------------------------------------------------------------------->
+  <section>
+    <H1>Gateways</H1>
+    <button (click)="addGateway()">Add Gateway</button>
+    <div class="box">
+      <p>Target Bonus: {{getGatewayTargetBonus()}}</p>
+      <p>Target Bonus Multiplier: {{getGatewayTargetBonusMultiplier()}}</p>
+      <p>Admitted Bonus: {{getGatewayAdmittedBonus()}}</p>
+    </div>
+    <div *ngFor="let item of currentPlan.Gateways">
+       <div>
+         <label>Gateway</label>
+        <table>
+          <tr>
+          <td>
+            <select  name="GoalId" [(ngModel)]="item['GoalId']" (ngModelChange)="onGoalChange($event, item)">
+              <option [ngValue]="undefined">Select Gateway</option>
+              <option value="{{goal.Id}}" *ngFor="let goal of item.goals">{{goal.Name}}</option>
+            </select>
+          </td>
+          <td *ngIf="item['GoalId']">
+            <select class="form-control" name="MeasureId" [(ngModel)]="item['MeasureId']" (ngModelChange)="onMeasureChange($event, item)">
+              <option [ngValue]="undefined">Select Measure</option>
+              <option value="{{measure.Id}}" *ngFor="let measure of item.measures">{{measure.Name}}</option>
+            </select>
+          </td>
+          <td  *ngIf="currentMeasureObj && currentMeasureObj.MeasureType==='money'">
+            <select class="form-control" name="FormatId" [(ngModel)]="item['FormatId']">
+              <option [ngValue]="undefined">SelectFormat</option>
+              <option value="{{format.Id}}" *ngFor="let format of item.formats">{{format.Name}}</option>
+            </select>
+          </td>
+          <td *ngIf="currentMeasureObj && currentMeasureObj.MeasureType==='money' && item['formats']">
+            <input type="text" name="Currency" [(ngModel)]="item['Currency']" class="form-control">
+          </td>
+          <td *ngIf="currentMeasureObj && currentMeasureObj.MeasureType==='scale' && item['scales']">
+            <select class="form-control" name="ScaleId" [(ngModel)]="item['ScaleId']">
+              <option [ngValue]="undefined">Select Scale</option>
+              <option value="{{scale.Id}}" *ngFor="let scale of item.scales">{{scale.Name}}</option>
+            </select>
+          </td>
+        </tr>
+
+        </table>
+      
+          <div class="gat_corridor" *ngIf="currentMeasureObj && currentMeasureObj.MeasureType!=='enum'">
+            <div class="form-check">
+              <input class="form-check-input magic-checkbox" [(ngModel)]="item['IsCorridor']" type="checkbox" id="IsCorridor">
+              <label class="form-check-label" (click)="item['IsCorridor']=!item['IsCorridor']" for="IsCorridor">
+               IsCorridor
+              </label>
+            </div>
+            <table  *ngIf="item['IsCorridor']">
+              <tr>
+                <td>
+                  <label for="">Min</label>
+                    <input type="text" name="Min" [(ngModel)]="item['Min']" class="input_small form-control">
+                </td>
+                <td>
+                  <label for="">Max</label>
+                    <input type="text" name="Max" [(ngModel)]="item['Max']" class="input_small form-control">
+                </td>
+                <td>
+                  <label for="">Floor</label>
+                  <input  type="text" name="Floor" [(ngModel)]="item['Floor']" class="input_small form-control">
+                </td>
+                <td>
+                  <label for="">Cap</label>
+                  <input  type="text" name="Cap" [(ngModel)]="item['Cap']" class="input_small form-control">
+                </td>
+              </tr>
+
+            </table>
+          </div>
+
+          <div  *ngIf="currentMeasureObj && currentMeasureObj.ConsultationMode>0">
+            <div class="">
+
+              <div class="display-flex-left">
+                <div class="form-check" *ngIf="checkVisible(4)">
+                  <input class="form-check-input magic-radio" name="ConsultationType" type="radio" id="punctual" value="4" (click)="setChecked( 4,item)">
+                  <label class="form-check-label" for="punctual" (click)="setChecked( 4,item)">
+                    Punctual
+                  </label>
+                </div>
+                <div class="form-check" *ngIf="checkVisible(2)">
+                  <input class="form-check-input magic-radio" name="ConsultationType" type="radio" id="cumulative" value="2" (click)="setChecked( 2,item)">
+                  <label class="form-check-label" for="cumulative" (click)="setChecked( 2,item)">
+                    Cumulative
+                  </label>
+                </div>
+                <div class="form-check" *ngIf="checkVisible(1)">
+                  <input class="form-check-input magic-radio" name="ConsultationType" type="radio" id="average" value="1" (click)="setChecked( 1,item)">
+                  <label class="form-check-label" for="average" (click)="setChecked( 1,item)">
+                    Average
+                  </label>
+                </div>
+              </div>
+            </div>
+            <table *ngIf="item['ConsultationType']==4">
+              <!-- PUNCTUAL -->
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th *ngFor="let year of item.years">{{year}}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Target Value</td>
+                  <td *ngFor="let year of item.years">
+                    <input  type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+
+            <table *ngIf="item['ConsultationType']==2">
+              <!-- CUMULATIVE -->
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th *ngFor="let year of item.years">{{year}}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Yearly Value</td>
+                  <td *ngFor="let year of item.years">
+                    <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Target Value</td>
+                  <td *ngFor="let year of item.years">
+                    {{getTargetValue(year)}}
+                  </td>
+                </tr>
+                <tr *ngIf="item['IsCorridor']">
+                  <td>Min</td>
+                  <td *ngFor="let year of item.years">
+                    {{getMinValue(year)}}
+                  </td>
+                </tr>
+                <tr *ngIf="item['IsCorridor']">
+                  <td>Max</td>
+                  <td *ngFor="let year of item.years">
+                    {{getMaxValue(year)}}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+
+
+            <table *ngIf="item['ConsultationType']==1">
+              <!-- AVERAGE -->
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th *ngFor="let year of item.years">{{year}}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>YearlyValue</td>
+                  <td *ngFor="let year of item.years">
+                    <input OnlyInteger="true" type="text" id="{{year}}" class="form-control input_small" (blur)="checkValue($event, year)">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Target Value</td>
+                  <td *ngFor="let year of item.years">
+                    {{getTargetValue(year)}}
+                  </td>
+                </tr>
+                <tr *ngIf="item['IsCorridor']">
+                  <td>Min</td>
+                  <td *ngFor="let year of item.years">
+                    {{getMinValue(year)}}
+                  </td>
+                </tr>
+                <tr *ngIf="item['IsCorridor']">
+                  <td>Max</td>
+                  <td *ngFor="let year of item.years">
+                    {{getMaxValue(year)}}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+  
+          </div>
+        
+    </div>
+  </div>
+</section>
+</div>

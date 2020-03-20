@@ -12,6 +12,11 @@
             "element",
             "app",
             "kebab-case"
-        ]
+        ],
+        "prefer-const":false,
+        "curly":false,
+        "whitespace":false,
+        "quotemark":false,
+        "max-line-length":false
     }
 }
