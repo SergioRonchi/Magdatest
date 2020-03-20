@@ -123,7 +123,8 @@ this.Plan.PartecipantsByYear.forEach( pby => {
     this.Plan.Bonuses.push(Bonus);
     if (this.Plan["Multipliers"]) {
       let m=this.Plan["Multipliers"].find(x => x.year==pby.Year);
-      let ps=this.Plan["PayoutStructure"]["Rows"].find(z => z.AccrueYear==(pby.Year as unknown) && (pby.Year as unknown)==z.PayoutValues["PayoutYear"]);
+      let ay=this.Plan["PayoutStructure"]["Rows"].find(z => z.AccrueYear==pby.Year);
+      let py=ay["PayoutValues"].find( v => v.PayoutYear==pby.Year)
       pby.Partecipants.forEach(part=> {
          part.TargetBonus = part.TargetBonusPercentage * part.GrossAnnualSalary;
          part.AdmittedBonus = part.TargetBonus*m.multipliers.gateways;
@@ -131,8 +132,8 @@ this.Plan.PartecipantsByYear.forEach( pby => {
          Bonus.Target+=part.TargetBonus;
          Bonus.Admitted+=part.AdmittedBonus;
          Bonus.Accrued+=part.AccruedBonus;
-         part.PayableCash = part.AccruedBonus * ps.Cash;
-        part.PayableEquity = part.AccruedBonus * ps.Equity;
+         part.PayableCash = part.AccruedBonus * py.Cash;
+        part.PayableEquity = part.AccruedBonus * py.Equity;
           });
 
     }
@@ -418,7 +419,7 @@ calcValue(o){
       },
      "PartecipantsByYear":[
   {
-   "Year": "2020",
+   "Year": 2020,
    "Partecipants":[
      {
     "EmployeeId": "4E96A664-87F6-4348-B2C3-27B73EB6E245",
@@ -445,7 +446,7 @@ calcValue(o){
    ]
   },
   {
-    "Year": "2021",
+    "Year": 2021,
     "Partecipants":[
       {
      "EmployeeId": "4E96A664-87F6-4348-B2C3-27B73EB6E245",
@@ -471,7 +472,7 @@ calcValue(o){
     ]
    },
    {
-    "Year": "2022",
+    "Year": 2022,
     "Partecipants":[
       {
      "EmployeeId": "4E96A664-87F6-4348-B2C3-27B73EB6E245",
@@ -497,7 +498,7 @@ calcValue(o){
     ]
    },
    {
-    "Year": "2023",
+    "Year": 2023,
     "Partecipants":[
       {
      "EmployeeId": "4E96A664-87F6-4348-B2C3-27B73EB6E245",
