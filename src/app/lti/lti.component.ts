@@ -24,6 +24,10 @@ export class LtiComponent implements OnInit {
 
   ngOnInit() {
   }
+   /*************************************************************************** */
+   updateModel() {
+    calculateLTIPlanParametes(this.currentPlan);
+  }
  /*************************************************************************** */
   /**
    * Creates a new Plan
@@ -86,7 +90,8 @@ export class LtiComponent implements OnInit {
       ActivationDate: undefined
     };
 
-    calculateLTIPlanParametes(this.currentPlan);
+    this.updateModel();
+
 
   }
   
@@ -94,7 +99,7 @@ export class LtiComponent implements OnInit {
   addGateway(){
     let years: number[] = [];
     for (let index = this.currentPlan.YearStart; index <= this.currentPlan.YearEnd; index++) {
-      years.push(index)
+      years.push(index);
     }
     this.currentPlan.Gateways.push({
       goals: this.goals,
@@ -102,6 +107,30 @@ export class LtiComponent implements OnInit {
       years: years
     });
   }
+  /*************************************************************************** */
+  addObjective(){
+    let years: number[] = [];
+    for (let index = this.currentPlan.YearStart; index <= this.currentPlan.YearEnd; index++) {
+      years.push(index);
+    }
+    this.currentPlan.Objectives.push({
+      goals: this.goals,
+      IsCorridor: false,
+      years: years
+    });
+  }
+ /*************************************************************************** */
+ addCorrective(){
+  let years: number[] = [];
+  for (let index = this.currentPlan.YearStart; index <= this.currentPlan.YearEnd; index++) {
+    years.push(index);
+  }
+  this.currentPlan.Correctives.push({
+    goals: this.goals,
+    IsCorridor: false,
+    years: years
+  });
+}
    /*************************************************************************** */
   getGatewayTargetBonus(){
       return 0; //TODO
@@ -114,6 +143,30 @@ export class LtiComponent implements OnInit {
   getGatewayAdmittedBonus(){
     return 0; //TODO
   }
+  /*************************************************************************** */
+    getObjectiveTargetBonus(){
+      return 0; //TODO
+  }
+   /*************************************************************************** */
+  getObjectiveTargetBonusMultiplier(){
+    return 0; //TODO
+  }
+   /*************************************************************************** */
+  getObjectiveAdmittedBonus(){
+    return 0; //TODO
+  }
+  /*************************************************************************** */
+  getCorrectiveTargetBonus(){
+    return 0; //TODO
+}
+ /*************************************************************************** */
+getCorrectiveTargetBonusMultiplier(){
+  return 0; //TODO
+}
+ /*************************************************************************** */
+getCorrectiveAdmittedBonus(){
+  return 0; //TODO
+}  
   /*************************************************************************** */
   getTotalTargetValue() {
     return '-';//TODO
@@ -138,14 +191,12 @@ export class LtiComponent implements OnInit {
   getMaxValue(year: number) {
     return '-';//TODO
   }
- /*************************************************************************** */
-  updateModel() {
-    calculateLTIPlanParametes(this.currentPlan);
-  }
+
  /*************************************************************************** */
   onGoalChange(goalId: any, item:any) {
     console.log('onGoalChange', goalId);
     this.selectGoal(goalId,item);
+    this.updateModel();
   }
  /*************************************************************************** */
   selectGoal(goalId: string, item:any) {
@@ -168,6 +219,7 @@ export class LtiComponent implements OnInit {
     } catch (error) {
 
     }
+    this.updateModel();
   }
  /*************************************************************************** */
  checkVisible(type: number) {
@@ -187,6 +239,47 @@ export class LtiComponent implements OnInit {
 
  setChecked(value, item){
   item['ConsultationType']=value;
+  this.updateModel();
  }
+ /*************************************************************************** */
+ setValue(year: number, value: number, item) {
+  if (item['YearlyValues']) {
+
+    item['YearlyValues'].forEach((yearlyValue: any) => {
+      if (yearlyValue.Year === year) {
+        yearlyValue.CurrentValue = value;
+      }
+    });
+
+  } else {
+    item['YearlyValues'] = [];
+    item['YearlyValues'].push({
+      Year: year,
+      TargetValue: 0,
+      CurrentValue: value
+    });
+  }
+  this.updateModel();
+}
+ /*************************************************************************** */
+checkValue(event: any, year: number, item) {
+  const value=event.target.value;
+ // const value = $(event.target).val();
+  console.log(value, year);
+
+  if (this.currentMeasureObj.MeasureType==='scale') {
+    const currentScale = item['scales'].filter((scale: any) => scale.Id === item['ScaleId']);
+    if (currentScale && currentScale[0]) {
+      if (currentScale[0].Minimum <= value && currentScale[0].Maximum >= value) {
+        this.setValue(year, Number(value),item);
+      } else {
+      }
+    } else {
+    }
+  } else {
+    this.setValue(year, Number(value),item);
+  }
+
+}
 
 }
