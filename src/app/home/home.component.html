@@ -248,6 +248,29 @@
     </table>
 </ul>
 
+<ul>
+        <H1>Bonuses</H1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Target</th>
+                        <th>Admitted</th>
+                        <th>Accrued</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let r of Plan.Bonuses">
+                        <td>{{r.Year}}</td>
+                        <td>{{r.Target }}</td>
+                        <td>{{r.Accrued }}</td>
+                        <td>{{r.Admitted }}</td>
+                    </tr>
+                </tbody>
+    
+        </table>
+    </ul>
+    
 
 
 
@@ -268,6 +291,8 @@
                          <th>Target Bonus</th>
                          <th>Admitted Bonus</th>
                          <th>Accrued Bonus</th>
+                         <th>PayableCash</th>
+                        
                          </tr>
                      </thead>
      
@@ -279,22 +304,25 @@
                                     {{row.Surname}}
                                </td>
                               <td>
-                                  {{row.GrossAnnualSalary}}
+                                  <input type="text" [(ngModel)]="row.GrossAnnualSalary" (ngModelChange)="onModelChange()"/>
                              </td>
                             
                              <td>
                                   {{row.TargetBonusPercentage}}
                              </td>
                              <td>
-                                    {{row.TargetBonusPercentage * row.GrossAnnualSalary}}
+                                    {{row.TargetBonus}}
                             </td>
                             <td>
-                                    {{getAdmittedBonusP(row, y.Year)}}
+                                    {{row.AdmittedBonus}}
                             </td>
                             <td>
-                                    {{getAccruedBonusP(row, y.Year)}}
+                                    {{row.AccruedBonus}}
                             </td>
-                            
+                            <td>
+                                    {{row.PayableCash}}
+                            </td>
+                           
                      </tr>   
                  </table>
              </li>    

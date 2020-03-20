@@ -4,6 +4,7 @@ import { HttpService } from '../http.service';
 import { isNull } from '@angular/compiler/src/output/output_ast';
 import { listLazyRoutes } from '@angular/compiler/src/aot/lazy_routes';
 import { forEach } from '@angular/router/src/utils/collection';
+import { PlayerIndex } from '@angular/core/src/render3/interfaces/player';
 
 @Component({
   selector: 'app-home',
@@ -33,9 +34,15 @@ export class HomeComponent implements OnInit {
   countClick() {
     this.clickCounter +=1;
     this.Plan["Multipliers"] = this.calculateAllMultipliers(this.Plan);
-    this.Plan.PartecipantsByYear["Partecipant"]["TargetBonus"] = this.calculateTargetBonus()
-  
+    this.getBonusesP();
   }
+
+  onModelChange() {
+    this.Plan["Multipliers"] = this.calculateAllMultipliers(this.Plan);
+    this.getBonusesP();
+  }
+  
+
   /**
    * Changes style according to counter value
    */
@@ -101,17 +108,40 @@ export class HomeComponent implements OnInit {
   return targetbonusy;
 }
 
-getAdmittedBonusP(part, year){
-  let m=this.Plan["Multipliers"].find(x => x.year=year);
-  let admittedbonusp=part.GrossAnnualSalary*part.TargetBonusPercentage*m.multipliers.gateways;
-  return admittedbonusp;
+
+
+ 
+getBonusesP(){
+this.Plan.Bonuses=[];
+this.Plan.PartecipantsByYear.forEach( pby => {
+    let Bonus={
+      "Year":pby.Year,
+      "Target":0,
+      "Admitted":0,
+      "Accrued":0,
+    };
+    this.Plan.Bonuses.push(Bonus);
+    if (this.Plan["Multipliers"]) {
+      let m=this.Plan["Multipliers"].find(x => x.year==pby.Year);
+      let ps=this.Plan["PayoutStructure"]["Rows"].find(z => z.AccrueYear==(pby.Year as unknown) && (pby.Year as unknown)==z.PayoutValues["PayoutYear"]);
+      pby.Partecipants.forEach(part=> {
+         part.TargetBonus = part.TargetBonusPercentage * part.GrossAnnualSalary;
+         part.AdmittedBonus = part.TargetBonus*m.multipliers.gateways;
+         part.AccruedBonus = part.AdmittedBonus*m.multipliers.objectives;
+         Bonus.Target+=part.TargetBonus;
+         Bonus.Admitted+=part.AdmittedBonus;
+         Bonus.Accrued+=part.AccruedBonus;
+         part.PayableCash = part.AccruedBonus * ps.Cash;
+        part.PayableEquity = part.AccruedBonus * ps.Equity;
+          });
+
+    }
+  });
 }
 
-getAccruedBonusP(part, year){
-  let m=this.Plan["Multipliers"].find(x => x.year=year);
-  let accruedbonusp=part.admittedbonusp*m.multipliers.objectives;
-  return accruedbonusp;
-}
+
+
+
 
 getAdmittedBonusC(pby){
   let year=pby.Year;
@@ -235,7 +265,7 @@ getWeightedMultiplier(o,year){
  * Calculates all multiplies
  * @param p LTI plan
  */
-calculateAllMultipliers(p){
+calculateAllMultipliers(p):any {
   let grandMultipliers={};
   this.addMultiplier(p.Gateways, grandMultipliers, "Gateways", p);
   this.addMultiplier(p.Objectives, grandMultipliers, "Objectives",p);
@@ -396,6 +426,7 @@ calcValue(o){
     "Surname": "Acker",
     "TargetBonusPercentage": "0.2",	
     "GrossAnnualSalary": 100000.0000,
+    
   },
   {
     "EmployeeId": "FC3D3D67-1EBB-4E07-B457-630BB95B137E",
