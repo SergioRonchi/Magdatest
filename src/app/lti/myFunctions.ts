@@ -252,14 +252,14 @@ let multiplier={
     multiplier.min=1;
   }
   else {
-    multiplier.min=o.Floor;
+    multiplier.min=o.Floor/100;
   }
 
 if (o.IsCorridor===false) { 
     multiplier.max=1;
   }
   else {
-    multiplier.max=o.Cap;
+    multiplier.max=o.Cap/100;
   }      
   return multiplier;
 }
