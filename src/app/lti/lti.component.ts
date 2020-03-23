@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { interval } from 'rxjs';
+
 import * as myFakeObjects from './myModel';
 import { calculateLTIPlanParametes } from './myFunctions';
 
@@ -23,10 +25,12 @@ export class LtiComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
+    const source = interval(5000);
+    source.subscribe(()=>this.updateModel());
   }
    /*************************************************************************** */
    updateModel() {
-    calculateLTIPlanParametes(this.currentPlan);
+    calculateLTIPlanParametes(this.currentPlan, false);
   }
  /*************************************************************************** */
   /**
@@ -90,7 +94,6 @@ export class LtiComponent implements OnInit {
       ActivationDate: undefined
     };
 
-    this.updateModel();
 
 
   }
@@ -98,75 +101,196 @@ export class LtiComponent implements OnInit {
  /*************************************************************************** */
   addGateway(){
     let years: number[] = [];
+    let yearlyValues:any[]=[];
+
     for (let index = this.currentPlan.YearStart; index <= this.currentPlan.YearEnd; index++) {
       years.push(index);
-    }
+      yearlyValues.push({
+        Year: index,
+        TargetValue: 0,
+        CurrentValue: 0
+      });
+    };
     this.currentPlan.Gateways.push({
       goals: this.goals,
       IsCorridor: false,
-      years: years
+      Min:90,
+      Max:110,
+      Floor:80,
+      Cap:120,
+      Weight:100,
+      years: years,
+      YearlyValues:yearlyValues
     });
   }
   /*************************************************************************** */
   addObjective(){
     let years: number[] = [];
+    let yearlyValues:any[]=[];
     for (let index = this.currentPlan.YearStart; index <= this.currentPlan.YearEnd; index++) {
       years.push(index);
-    }
+      yearlyValues.push({
+        Year: index,
+        TargetValue: 0,
+        CurrentValue: 0
+      });
+    };
     this.currentPlan.Objectives.push({
       goals: this.goals,
       IsCorridor: false,
-      years: years
+      Weight:100,
+      Min:90,
+      Max:110,
+      Floor:80,
+      Cap:120,
+      years: years,
+      YearlyValues:yearlyValues
     });
   }
  /*************************************************************************** */
  addCorrective(){
   let years: number[] = [];
+  let yearlyValues:any[]=[];
   for (let index = this.currentPlan.YearStart; index <= this.currentPlan.YearEnd; index++) {
     years.push(index);
-  }
+    yearlyValues.push({
+      Year: index,
+      TargetValue: 0,
+      CurrentValue: 0
+    });
+  };
   this.currentPlan.Correctives.push({
     goals: this.goals,
     IsCorridor: false,
-    years: years
+    Weight:100,
+    Min:90,
+    Max:110,
+    Floor:80,
+    Cap:120,
+    years: years,
+    YearlyValues:yearlyValues
   });
 }
    /*************************************************************************** */
   getGatewayTargetBonus(){
-      return 0; //TODO
+      return  this.getTotalTargetValue()
   }
    /*************************************************************************** */
-  getGatewayTargetBonusMultiplier(){
-    return 0; //TODO
+  getGatewayTargetBonusMultiplierValue(){
+    if(this.currentPlan && this.currentPlan.Multipliers && this.currentPlan.Multipliers.multipliers && this.currentPlan.Multipliers.multipliers.gateways){
+      let g=this.currentPlan.Multipliers.multipliers.gateways;
+
+      if (!isNaN(g.min)&&!isNaN(g.max)){
+        return  {min:g.min, max:g.max};               
+      }
+
+    }
+
+    return{min:1, max:1};            
   }
-   /*************************************************************************** */
-  getGatewayAdmittedBonus(){
-    return 0; //TODO
+ /*************************************************************************** */
+  getGatewayTargetBonusMultiplier() {
+    let v=this.getGatewayTargetBonusMultiplierValue();
+
+    if(v.min===v.max){
+      return v.min.toFixed(1);
+    } else {
+      return v.min.toFixed(1) + "-" + v.max.toFixed(1);
+    }
+  
+  }
+ /*************************************************************************** */
+  getGatewayAdmittedBonusValue() {
+    let n=0.0;
+    if(this.currentPlan.TotalBonus) n=this.currentPlan.TotalBonus.Target;
+    let v=this.getGatewayTargetBonusMultiplierValue();
+    return {min:v.min*n,max:v.max*n};
+   
+  }
+ /*************************************************************************** */
+  getGatewayAdmittedBonus() {
+    let n=this.getGatewayAdmittedBonusValue();
+   
+    return n.min + ' - ' + n.max;
   }
   /*************************************************************************** */
-    getObjectiveTargetBonus(){
-      return 0; //TODO
+  getObjectiveTargetBonusMultiplierValue(){
+    if(this.currentPlan && this.currentPlan.Multipliers && this.currentPlan.Multipliers.multipliers && this.currentPlan.Multipliers.multipliers.objectives){
+      let g=this.currentPlan.Multipliers.multipliers.objectives;
+
+      if (!isNaN(g.min)&&!isNaN(g.max)){
+        return  {min:g.min, max:g.max};               
+      }
+
+    }
+
+    return{min:1, max:1};            
   }
-   /*************************************************************************** */
-  getObjectiveTargetBonusMultiplier(){
-    return 0; //TODO
-  }
-   /*************************************************************************** */
-  getObjectiveAdmittedBonus(){
-    return 0; //TODO
+
+  /*************************************************************************** */
+  getObjectiveTargetBonusMultiplier() {
+    let v=this.getObjectiveTargetBonusMultiplierValue();
+
+    if(v.min===v.max){
+      return v.min.toFixed(1);
+    } else {
+      return v.min.toFixed(1) + "-" + v.max.toFixed(1);
+    }
   }
   /*************************************************************************** */
-  getCorrectiveTargetBonus(){
-    return 0; //TODO
-}
- /*************************************************************************** */
-getCorrectiveTargetBonusMultiplier(){
-  return 0; //TODO
-}
- /*************************************************************************** */
-getCorrectiveAdmittedBonus(){
-  return 0; //TODO
-}  
+  getObjectiveAdmittedBonusValue() {
+    let n=0.0;
+    if(this.currentPlan.TotalBonus) n=this.currentPlan.TotalBonus.Target;
+    let v=this.getObjectiveTargetBonusMultiplierValue();
+    return {min:v.min*n,max:v.max*n};
+   
+  }
+  /*************************************************************************** */
+  getObjectiveAdmittedBonus() {
+
+    let n=this.getObjectiveAdmittedBonusValue();
+   
+    return n.min + ' - ' + n.max;
+  }
+  /*************************************************************************** */
+  getCorrectiveTargetBonusMultiplierValue(){
+    if(this.currentPlan && this.currentPlan.Multipliers && this.currentPlan.Multipliers.multipliers && this.currentPlan.Multipliers.multipliers.correctives){
+      let g=this.currentPlan.Multipliers.multipliers.correctives;
+
+      if (!isNaN(g.min)&&!isNaN(g.max)){
+        return  {min:g.min, max:g.max};               
+      }
+
+    }
+
+    return{min:1, max:1};            
+  }
+  /*************************************************************************** */
+  getCorrectiveObjectiveTargetBonusMultiplier() {
+    let v=this.getCorrectiveTargetBonusMultiplierValue();
+
+    if(v.min===v.max){
+      return v.min.toFixed(1);
+    } else {
+      return v.min.toFixed(1) + "-" + v.max.toFixed(1);
+    }
+
+    return 1;
+  }
+  /*************************************************************************** */
+  getCorrectiveAdmittedBonusValue() {
+    let n=0.0;
+    if(this.currentPlan.TotalBonus) n=this.currentPlan.TotalBonus.Target;
+    let v=this.getCorrectiveTargetBonusMultiplierValue();
+    return {min:v.min*n,max:v.max*n};
+   
+  }
+  /*************************************************************************** */
+  getCorrectiveObjectiveAdmittedBonus() {
+    let n=this.getCorrectiveAdmittedBonusValue();
+   
+    return n.min + ' - ' + n.max;
+  }
   /*************************************************************************** */
   getTotalTargetValue() {
     if (this.currentPlan && this.currentPlan.TotalBonus) {
@@ -186,23 +310,61 @@ getCorrectiveAdmittedBonus(){
     return '-';//TODO
   }
   /*************************************************************************** */
-  getTargetValue(year: number) {
-    return '-';//TODO
+  getTargetValue(item,year) {
+    let retValue =0;
+    let previosItems:any;
+    let count=0;
+    switch(item.ConsultationType)
+    {
+      case 1: //average
+        previosItems=item.YearlyValues.filter(x=>x.Year<=year.Year);
+        previosItems.forEach(element => {
+          retValue+=element.CurrentValue;
+          count++;
+        });
+        retValue=retValue/count;
+        break;
+      case 2 : //cumulative
+        previosItems=item.YearlyValues.filter(x=>x.Year<=year.Year);
+        previosItems.forEach(element => {
+          retValue+=element.CurrentValue;
+        });
+
+        break;
+      case 4 : //punctual
+        break;        
+    }
+   
+    return retValue;
   }
   /*************************************************************************** */
-  getMinValue(year: number) {
-    return '-';//TODO
+  getMinValue(item,year) {
+    if(item.Measure && item.Measure.MeasureType==='scale'){
+      return item.Min;
+    }
+    else{
+      let tv=this.getTargetValue(item,year);
+      tv=tv*item.Min/100;
+      return tv;
+    }
   }
   /*************************************************************************** */
-  getMaxValue(year: number) {
-    return '-';//TODO
+  getMaxValue(item,year) {
+    if(item.Measure && item.Measure.MeasureType==='scale'){
+      return item.Max;
+    }
+    else{
+      let tv=this.getTargetValue(item,year);
+      tv=tv*item.Max/100;
+      return tv;
+    }
   }
 
  /*************************************************************************** */
   onGoalChange(goalId: any, item:any) {
     console.log('onGoalChange', goalId);
     this.selectGoal(goalId,item);
-    this.updateModel();
+  
   }
  /*************************************************************************** */
   selectGoal(goalId: string, item:any) {
@@ -215,7 +377,7 @@ getCorrectiveAdmittedBonus(){
     try {
       this.currentMeasureObj = item['measures'].filter((measure: any) => measure.Id === measureId)[0];
       console.log(this.currentMeasureObj);
-
+      item['Measure']=this.currentMeasureObj; // =>>>> Need this to functions
       if (this.currentMeasureObj.MeasureType === 'money') {
         item['formats'] = this.formats;
       } else if (this.currentMeasureObj.MeasureType === 'scale') {
@@ -225,7 +387,7 @@ getCorrectiveAdmittedBonus(){
     } catch (error) {
 
     }
-    this.updateModel();
+   
   }
  /*************************************************************************** */
  checkVisible(type: number) {
@@ -245,7 +407,7 @@ getCorrectiveAdmittedBonus(){
 
  setChecked(value, item){
   item['ConsultationType']=value;
-  this.updateModel();
+
  }
  /*************************************************************************** */
  setValue(year: number, value: number, item) {
@@ -265,7 +427,7 @@ getCorrectiveAdmittedBonus(){
       CurrentValue: value
     });
   }
-  this.updateModel();
+
 }
  /*************************************************************************** */
 checkValue(event: any, year: number, item) {
