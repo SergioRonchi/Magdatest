@@ -33,6 +33,10 @@ function calculateBonuses(p){
             PayableCash:0.0,
             PayableEquity:0.0,
             Deferred:0.0,
+            PastYearsPayable:0.0,
+            BonusBankOpening:0.0,
+            BonusBankBase:0.0,
+            BonusBankClosing:0.0,
 
           };
          
@@ -40,13 +44,53 @@ function calculateBonuses(p){
           let multiplierByYear=undefined;
 
           if (p.Multipliers) multiplierByYear=p.Multipliers.ByYear.find(x => x.year==pby.Year);
-          //let ay=this.Plan["PayoutStructure"]["Rows"].find(z => z.AccrueYear==pby.Year);
+        
 
           let payByAccrueYear=p.PayoutStructure.Rows.find(z => z.AccrueYear===pby.Year);
           let pay=undefined;
-          if(payByAccrueYear) pay=payByAccrueYear.PayoutValues.find( v => v.PayoutYear===pby.Year)
+          
 
           pby.Partecipants.forEach(part=> {
+
+              part.Values={
+              
+              TargetBonus:0.0,
+              Admitted: {
+              value: 0.0,
+              min: 0.0,
+              max: 0.0,
+              result: 0.0},
+              Accrued:{
+                value: 0.0,
+                min: 0.0,
+                max: 0.0,
+                result: 0.0},
+              Deferred:{
+                value: 0.0,
+                min: 0.0,
+                max: 0.0,
+                result: 0.0},
+              PaybleDeferred:[],
+              BonusBankOpening:{
+                value: 0.0,
+                min: 0.0,
+                max: 0.0,
+                result: 0.0},
+              BonusBankBase:{
+                value: 0.0,
+                min: 0.0,
+                max: 0.0,
+                result: 0.0},
+              BonusBankClosing:{
+                value: 0.0,
+                min: 0.0,
+                max: 0.0,
+                result: 0.0},
+  
+            }; 
+
+            part.TotalValues={};
+    
                   part.TargetBonus = part.TargetBonusPercentage/100 * part.GrossAnnualSalary;
 
                   if(!isNaN(part.TargetBonus) && p.RoundBonusValue>0){
@@ -60,17 +104,54 @@ function calculateBonuses(p){
                         break;
                     }
                   }
+                  part.Values.TargetBonus=part.TargetBonus;
 
                   if(multiplierByYear) {
-                    part.AdmittedBonus = part.TargetBonus*multiplierByYear.multipliers.gateways;
-                    part.AccruedBonus = part.AdmittedBonus*multiplierByYear.multipliers.objectives;
+                    part.Values.AdmittedBonus={
+                      value:part.TargetBonus*multiplierByYear.multipliers.gateways.value,
+                      min:part.TargetBonus*multiplierByYear.multipliers.gateways.min,
+                      max:part.TargetBonus*multiplierByYear.multipliers.gateways.max,
+                    };
+                    part.Values.AccruedBonus={
+                      value:part.Values.AdmittedBonus.value*multiplierByYear.multipliers.objectives.value,
+                      min:part.Values.AdmittedBonus.min*multiplierByYear.multipliers.objectives.min,
+                      max:part.Values.AdmittedBonus.max*multiplierByYear.multipliers.objectives.max,
+                    };
+                    
+        
                   }
-                  if(pay) {
-                    part.PayableCash = part.AccruedBonus * pay.Cash;
-                    part.PayableEquity = part.AccruedBonus * pay.Equity;
-                    part.Deferred = part.AccruedBonus - (part.PayableCash+part.PayableEquity);
+
+                  if(payByAccrueYear){
+
+                    payByAccrueYear.PayoutValues.forEach( payyear => {
+                          let PayableDeferred={
+                          AccrueYear:pby.Year,
+                          PayYear: payyear.PayoutYear,
+                          Cash: {
+                            value: part.AccruedBonus.value*payyear.Cash/100,
+                            min: part.AccruedBonus.min*payyear.Cash/100,
+                            max: part.AccruedBonus.max*payyear.Cash/100
+                          },
+                          Equity: {
+                            value: part.AccruedBonus.value*payyear.Equity/100,
+                            min: part.AccruedBonus.min*payyear.Equity/100,
+                            max: part.AccruedBonus.max*payyear.Equity/100
+                          },
+                         
+
+                        } ;
+                        if (!part.TotalValues[payyear.PayoutYear]) {
+                          part.TotalValues[payyear.PayoutYear]=0;
+                        }
+                        part.TotalValues[payyear.PayoutYear]+=part.PayableDeferred.Cash.value+part.PayableDeferred.Equity.value
+                       
+                        part.Values.PaybleDeferred.push(PayableDeferred);
+
+
+                   });
 
                   }
+
 
                   yearlyBonus.Target+=part.TargetBonus;
                   yearlyBonus.Admitted+=part.AdmittedBonus;
@@ -243,7 +324,7 @@ if(o.YearlyValues) {
 */
 function getPartialMultiplier(o,year){
 let multiplier={
-  value:0.0,
+  value:1.0,
   min:0.0,
   max:0.0
 };

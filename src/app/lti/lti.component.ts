@@ -53,10 +53,74 @@ export class LtiComponent implements OnInit {
       CorrectiveType: 0,
       PayoutStructure: {
         PayoutType: 1,
-        PayoutYearEnd: undefined,
-        PayoutYearStart: undefined,
+        PayoutYearEnd: 2024,
+        PayoutYearStart: 2021,
         PayoutNote: undefined,
-        Rows: []
+        Rows: [
+          {"AccrueYear":2020,
+           "PayoutValues":
+            [
+              {"PayoutYear":2020,
+              "Cash":0.10,
+              "Equity":0.20},
+             {"PayoutYear":2021,
+              "Cash":0.00,
+              "Equity":0.00},
+              {"PayoutYear":2022,
+              "Cash":0.15,
+              "Equity":0.25},
+             {"PayoutYear":2023,
+              "Cash":0.10,
+              "Equity":0.20},
+              {"PayoutYear":2024,
+              "Cash":0.0,
+              "Equity":0.0}
+            ]
+           },
+           {"AccrueYear":2021,
+           "PayoutValues":
+            [
+             {"PayoutYear":2021,
+              "Cash":0.10,
+              "Equity":0.20},
+              {"PayoutYear":2022,
+              "Cash":0.15,
+              "Equity":0.25},
+             {"PayoutYear":2023,
+              "Cash":0.10,
+              "Equity":0.20},
+              {"PayoutYear":2024,
+              "Cash":0.0,
+              "Equity":0.0}
+            ]
+           },
+           {"AccrueYear":2022,
+           "PayoutValues":
+            [
+            {"PayoutYear":2022,
+              "Cash":0.10,
+              "Equity":0.20},
+             {"PayoutYear":2023,
+              "Cash":0.20,
+              "Equity":0.10},
+              {"PayoutYear":2024,
+              "Cash":0.30,
+              "Equity":0.10}
+            ]
+           },
+           {"AccrueYear":2023,
+           "PayoutValues":
+            [
+             {"PayoutYear":2023,
+              "Cash":0.30,
+              "Equity":0.20},
+              {"PayoutYear":2024,
+              "Cash":0.40,
+              "Equity":0.10}
+           
+          ]
+        }
+      ]
       },
       PartecipantsByYear:[
         {
@@ -66,22 +130,22 @@ export class LtiComponent implements OnInit {
               "EmployeeId": "4E96A664-87F6-4348-B2C3-27B73EB6E245",
               "Name": "Marion",
               "Surname": "Acker",
-              "TargetBonusPercentage": 0,
-              "GrossAnnualSalary": 0,
+              "TargetBonusPercentage": 50,
+              "GrossAnnualSalary": 100000,
             },
             {
               "EmployeeId": "FC3D3D67-1EBB-4E07-B457-630BB95B137E",
               "Name": "Achine",
               "Surname": "Royal",
-              "TargetBonusPercentage":0,
-              "GrossAnnualSalary": 0,
+              "TargetBonusPercentage":20,
+              "GrossAnnualSalary": 200000,
             },
             {
               "EmployeeId": "1EE9C0B9-8D5E-4EE4-AE92-3818725A4EB6",
               "Name": "David",
               "Surname": "Abdo",
-              "TargetBonusPercentage": 0,
-              "GrossAnnualSalary": 0,
+              "TargetBonusPercentage": 10,
+              "GrossAnnualSalary": 300000,
             },
           ]
         }
@@ -238,17 +302,16 @@ export class LtiComponent implements OnInit {
     }
   }
   /*************************************************************************** */
-  getObjectiveAdmittedBonusValue() {
-    let n=0.0;
-    if(this.currentPlan.TotalBonus) n=this.currentPlan.TotalBonus.Target;
+  getAccruedBonusValue() {
+    let n=this.getGatewayAdmittedBonusValue();
     let v=this.getObjectiveTargetBonusMultiplierValue();
-    return {min:v.min*n,max:v.max*n};
+    return {min:v.min*n.min,max:v.max*n.max};
    
   }
   /*************************************************************************** */
-  getObjectiveAdmittedBonus() {
+  getAccruedBonus() {
 
-    let n=this.getObjectiveAdmittedBonusValue();
+    let n=this.getAccruedBonusValue();
    
     return n.min + ' - ' + n.max;
   }

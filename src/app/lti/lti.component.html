@@ -254,9 +254,9 @@
   <H1>Objectives</H1>
   <button (click)="addObjective()">Add Objective</button>
   <div class="box">
-    <p>Target Bonus: {{getTotalTargetValue()}}</p>
+    <p>Admitted Bonus: {{getGatewayAdmittedBonus()}}</p>
     <p>Target Bonus Multiplier: {{getObjectiveTargetBonusMultiplier()}}</p>
-    <p>Admitted Bonus: {{getObjectiveAdmittedBonus()}}</p>
+    <p>Accrued Bonus: {{getAccruedBonus()}}</p>
   </div>
   <div *ngFor="let item of currentPlan.Objectives">
      <div>
