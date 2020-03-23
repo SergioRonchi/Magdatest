@@ -25,7 +25,7 @@ export class LtiComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
-    const source = interval(5000);
+    const source = interval(3000);
     source.subscribe(()=>this.updateModel());
   }
    /*************************************************************************** */
@@ -329,7 +329,7 @@ export class LtiComponent implements OnInit {
     return{min:1, max:1};            
   }
   /*************************************************************************** */
-  getCorrectiveObjectiveTargetBonusMultiplier() {
+  getCorrectiveTargetBonusMultiplier() {
     let v=this.getCorrectiveTargetBonusMultiplierValue();
 
     if(v.min===v.max){
@@ -349,7 +349,7 @@ export class LtiComponent implements OnInit {
    
   }
   /*************************************************************************** */
-  getCorrectiveObjectiveAdmittedBonus() {
+  getCorrectiveAdmittedBonus() {
     let n=this.getCorrectiveAdmittedBonusValue();
    
     return n.min + ' - ' + n.max;

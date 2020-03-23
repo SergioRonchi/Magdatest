@@ -6,6 +6,93 @@ export function calculateLTIPlanParametes(plan, useCurrentValues) {
 
 }
 /****************************************************************************************************** */
+class RangeValue {
+  constructor(value, min, max) {
+    this.value = value;
+    this.min = min;
+    this.max = max;
+  }
+
+
+  value: number;
+  min: number;
+  max: number;
+
+  Add(v:RangeValue) {
+    this.value+=v.value;
+    this.min+=v.min;
+    this.max+=v.max;
+  }
+}
+
+class ResultRangeValue extends RangeValue {
+  constructor(value, min, max, result) {
+    super(value, min, max); // call the super class constructor and pass in the name parameter
+    this.result=result;
+  }
+  result: number;
+ 
+}
+
+class YearPayableDeferred {
+  constructor(payYear) {
+
+    this.PayYear=payYear;
+    this.Cash=new RangeValue(0,0,0);
+    this.Equity=new RangeValue(0,0,0);
+  }
+
+  PayYear: number;
+  Cash: RangeValue;
+  Equity: RangeValue;
+}
+
+class PayableDeferred extends YearPayableDeferred{
+  constructor(accrueYear, payYear) {
+    super(payYear);
+    this.AccrueYear=accrueYear;
+  
+  }
+  AccrueYear:number;
+ 
+}
+
+class PartecipantValueContainer  {
+  constructor() {
+    this.TargetBonus=0.0;
+    this.Admitted= new ResultRangeValue(0,0,0,0);
+    this.Accrued=new ResultRangeValue(0,0,0,0);
+    this.Deferred=new ResultRangeValue(0,0,0,0);
+    this.BonusBankOpening=new ResultRangeValue(0,0,0,0);
+    this.BonusBankBase=new ResultRangeValue(0,0,0,0);
+    this.BonusBankClosing=new ResultRangeValue(0,0,0,0);
+    this.PaybleDeferredArray=[];
+  }
+  TargetBonus:number;
+  Admitted:  ResultRangeValue;
+  Accrued: ResultRangeValue;
+  Deferred: ResultRangeValue;
+  PaybleDeferredArray:PayableDeferred[];
+  BonusBankOpening: ResultRangeValue;
+  BonusBankBase: ResultRangeValue;
+  BonusBankClosing: ResultRangeValue;
+}
+
+class KeyTotalMap {
+  Map(year:number, cash:RangeValue, equity:RangeValue){
+    if(!this[year]){
+      this[year]=new  YearPayableDeferred(year);
+    }
+
+    this[year].Cash.Add(cash);
+    this[year].Equity.Add(equity);
+
+  }
+
+
+}  
+
+/****************************************************************************************************** */
 /**
 * Calculate all bonuses
 * @param p 
@@ -40,60 +127,24 @@ function calculateBonuses(p){
 
           };
          
+          let byYearMap:KeyTotalMap = new KeyTotalMap();
+          let multiplierByYear = undefined;
 
-          let multiplierByYear=undefined;
-
-          if (p.Multipliers) multiplierByYear=p.Multipliers.ByYear.find(x => x.year==pby.Year);
+          if (p.Multipliers) multiplierByYear=p.Multipliers.ByYear.find(x => x.year===pby.Year);
         
 
           let payByAccrueYear=p.PayoutStructure.Rows.find(z => z.AccrueYear===pby.Year);
-          let pay=undefined;
-          
+         
 
           pby.Partecipants.forEach(part=> {
-
-              part.Values={
-              
-              TargetBonus:0.0,
-              Admitted: {
-              value: 0.0,
-              min: 0.0,
-              max: 0.0,
-              result: 0.0},
-              Accrued:{
-                value: 0.0,
-                min: 0.0,
-                max: 0.0,
-                result: 0.0},
-              Deferred:{
-                value: 0.0,
-                min: 0.0,
-                max: 0.0,
-                result: 0.0},
-              PaybleDeferred:[],
-              BonusBankOpening:{
-                value: 0.0,
-                min: 0.0,
-                max: 0.0,
-                result: 0.0},
-              BonusBankBase:{
-                value: 0.0,
-                min: 0.0,
-                max: 0.0,
-                result: 0.0},
-              BonusBankClosing:{
-                value: 0.0,
-                min: 0.0,
-                max: 0.0,
-                result: 0.0},
-  
-            }; 
-
-            part.TotalValues={};
+                  let partValue:PartecipantValueContainer=new PartecipantValueContainer();
+                
+                  if(!part.ByPayoutYearTotals)part.ByPayoutYearTotals=byYearMap;
+                 
     
                   part.TargetBonus = part.TargetBonusPercentage/100 * part.GrossAnnualSalary;
 
-                  if(!isNaN(part.TargetBonus) && p.RoundBonusValue>0){
+                  if(!isNaN(part.TargetBonus) && p.RoundBonusValue>0) {
                     let d=p.RoundBonusValue;
                     switch(p.RoundBonusFlag){
                       case "Up":
@@ -104,51 +155,42 @@ function calculateBonuses(p){
                         break;
                     }
                   }
-                  part.Values.TargetBonus=part.TargetBonus;
+                  partValue.TargetBonus=part.TargetBonus;
 
-                  if(multiplierByYear) {
-                    part.Values.AdmittedBonus={
-                      value:part.TargetBonus*multiplierByYear.multipliers.gateways.value,
-                      min:part.TargetBonus*multiplierByYear.multipliers.gateways.min,
-                      max:part.TargetBonus*multiplierByYear.multipliers.gateways.max,
-                    };
-                    part.Values.AccruedBonus={
-                      value:part.Values.AdmittedBonus.value*multiplierByYear.multipliers.objectives.value,
-                      min:part.Values.AdmittedBonus.min*multiplierByYear.multipliers.objectives.min,
-                      max:part.Values.AdmittedBonus.max*multiplierByYear.multipliers.objectives.max,
-                    };
-                    
-        
+                  if(multiplierByYear && multiplierByYear.multipliers.gateways) {
+                    partValue.Admitted.value=part.TargetBonus*multiplierByYear.multipliers.gateways.value;
+                    partValue.Admitted.min=part.TargetBonus*multiplierByYear.multipliers.gateways.min;
+                    partValue.Admitted.max=part.TargetBonus*multiplierByYear.multipliers.gateways.max;
+                  }
+                  if(multiplierByYear && multiplierByYear.multipliers.objectives) {
+                    partValue.Accrued.value=part.Values.AdmittedBonus.value*multiplierByYear.multipliers.objectives.value;
+                    partValue.Accrued.min=part.Values.AdmittedBonus.value*multiplierByYear.multipliers.objectives.min;
+                    partValue.Accrued.max=part.Values.AdmittedBonus.value*multiplierByYear.multipliers.objectives.max;
                   }
 
-                  if(payByAccrueYear){
+                  if(payByAccrueYear) {
 
                     payByAccrueYear.PayoutValues.forEach( payyear => {
-                          let PayableDeferred={
-                          AccrueYear:pby.Year,
-                          PayYear: payyear.PayoutYear,
-                          Cash: {
-                            value: part.AccruedBonus.value*payyear.Cash/100,
-                            min: part.AccruedBonus.min*payyear.Cash/100,
-                            max: part.AccruedBonus.max*payyear.Cash/100
-                          },
-                          Equity: {
-                            value: part.AccruedBonus.value*payyear.Equity/100,
-                            min: part.AccruedBonus.min*payyear.Equity/100,
-                            max: part.AccruedBonus.max*payyear.Equity/100
-                          },
-                         
+                          let payableDeferredItem:PayableDeferred=new PayableDeferred(pby.Year,payyear.PayoutYear);
+                          
+                          if(part.AccruedBonus){
+                                payableDeferredItem.Cash.value=part.AccruedBonus.value*payyear.Cash/100;
+                                payableDeferredItem.Cash.min=part.AccruedBonus.min*payyear.Cash/100;
+                                payableDeferredItem.Cash.max=part.AccruedBonus.max*payyear.Cash/100;
+                          
+                      
+                                payableDeferredItem.Equity.value=part.AccruedBonus.value*payyear.Equity/100;
+                                payableDeferredItem.Equity.min=part.AccruedBonus.min*payyear.Equity/100;
+                                payableDeferredItem.Equity.max=part.AccruedBonus.max*payyear.Equity/100;
+                          }
+                          
+                        byYearMap.Map(payyear.PayoutYear, payableDeferredItem.Cash, payableDeferredItem.Equity);
 
-                        } ;
-                        if (!part.TotalValues[payyear.PayoutYear]) {
-                          part.TotalValues[payyear.PayoutYear]=0;
-                        }
-                        part.TotalValues[payyear.PayoutYear]+=part.PayableDeferred.Cash.value+part.PayableDeferred.Equity.value
                        
-                        part.Values.PaybleDeferred.push(PayableDeferred);
+                        partValue.PaybleDeferredArray.push(payableDeferredItem);
+                      
 
-
-                   });
+                   }); // forEach PayoutValues
 
                   }
 
@@ -164,7 +206,10 @@ function calculateBonuses(p){
                   totalBonus.Admitted+=part.AdmittedBonus;
                   totalBonus.Accrued+=part.AccruedBonus;
 
-              });
+                  part.Values=partValue;
+              }); // forEach Partecipants
+
+
             if(pby.Year>lastYear){
               lastYear=pby.Year;
               lastYearBonus=yearlyBonus;
@@ -247,20 +292,19 @@ function addMultiplier(list, m, p, useCurrentValues){
         if(o.YearlyValues) {
           o.YearlyValues.forEach(y=> {
             if (!m[y.Year]) {
-              m[y.Year]={ 
-                value:0.0, 
-                min:0.0, 
+              m[y.Year]={
+                value:0.0,
+                min:0.0,
                 max:0.0
                         };
                       }
-            
+
             if(useCurrentValues){
               y.multiplier=getMultiplier(o,y);
-            }
-            else {
+            } else {
               y.multiplier=getPartialMultiplier(o,y);
             }
-            
+
 
             y.weightedmultiplier= getWeightedMultiplier( y.multiplier, o.Weight/100);
 
