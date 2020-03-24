@@ -163,9 +163,9 @@ function calculateBonuses(p){
                     partValue.Admitted.max=part.TargetBonus*multiplierByYear.multipliers.gateways.max;
                   }
                   if(multiplierByYear && multiplierByYear.multipliers.objectives) {
-                    partValue.Accrued.value=part.Values.AdmittedBonus.value*multiplierByYear.multipliers.objectives.value;
-                    partValue.Accrued.min=part.Values.AdmittedBonus.value*multiplierByYear.multipliers.objectives.min;
-                    partValue.Accrued.max=part.Values.AdmittedBonus.value*multiplierByYear.multipliers.objectives.max;
+                    partValue.Accrued.value=partValue.Admitted.value*multiplierByYear.multipliers.objectives.value;
+                    partValue.Accrued.min=partValue.Admitted.value*multiplierByYear.multipliers.objectives.min;
+                    partValue.Accrued.max=partValue.Admitted.value*multiplierByYear.multipliers.objectives.max;
                   }
 
                   if(payByAccrueYear) {
